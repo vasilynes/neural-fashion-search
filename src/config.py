@@ -8,7 +8,7 @@ class Config:
 
     @property
     def PROCESSED_DATA_DIR(self) -> Path:
-        return self.DATA_DIR / 'processed'
+        return self.DATA_DIR
     
     @property
     def IMAGES_DIR(self) -> Path:

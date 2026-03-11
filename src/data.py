@@ -8,6 +8,7 @@ from PIL import ImageOps
 import random
 from torch.utils.data import Sampler
 import torch
+from src.config import config
 
 class SquarePad:
     def __init__(self, fill=(255, 255, 255)):
@@ -97,6 +98,8 @@ class FashionDataset:
     def __getitem__(self, idx):
         row = self.df.iloc[idx]  
         image_path = row['image_path']
+        parts = Path(image_path.replace('\\', '/')).parts  # ('data', 'images', '069', '0694236008.jpg')
+        image_path = config.DATA_DIR.joinpath(*parts[1:])   # skip 'data', join rest
         
         image = Image.open(image_path).convert('RGB')
         
@@ -106,6 +109,7 @@ class FashionDataset:
             'product_type_name': row['product_type_name'],
             'detail_desc': row['detail_desc'],
             'caption': row['caption'],
+            'image_path': str(image_path),
         }
     
 def get_dataloader(dataset, loader_params, augment=False, sampler=None):
@@ -133,6 +137,8 @@ class HardNegativesBatchSampler(Sampler):
         self.hard_negatives_per_anchor = hard_negatives_per_anchor
 
         self.anchors_per_batch = batch_size // (1 + hard_negatives_per_anchor)
+        if self.anchors_per_batch == 0:
+          raise ValueError(f"batch_size ({batch_size}) is too small for hard_negatives_per_anchor ({hard_negatives_per_anchor}). Need batch_size >= {1 + hard_negatives_per_anchor}")
 
     def update_hard_negatives(self, hard_negatives):
         self.hard_negatives = hard_negatives

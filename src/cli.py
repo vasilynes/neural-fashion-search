@@ -30,5 +30,5 @@ def load_params(params_path):
         params = yaml.safe_load(f)
     for split in params:
         if params[split]['dataloader']['num_workers'] == 'auto':
-            params[split]['dataloader']['num_workers'] = min(os.cpu_count(), 4)
+            params[split]['dataloader']['num_workers'] = min(os.cpu_count(), 8)
     return params

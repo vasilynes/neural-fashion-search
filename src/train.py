@@ -121,7 +121,6 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
                 truncation=True,
                 max_length=77,
             ).to(device)
-
             outputs = model(**inputs, return_loss=True)
             loss = outputs.loss / accumulation_steps
             loss.backward()
@@ -131,12 +130,12 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
                 optimizer.step()
                 optimizer.zero_grad()
                 scheduler.step()
+            
 
         if (batch_idx + 1) % accumulation_steps != 0:
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
-
         avg_train_loss = train_loss / len(train_loader)
 
         model.eval()
@@ -184,8 +183,9 @@ def train_routine(train_loader, embed_loader, val_loader, train_params, sampler)
 
         model = AutoModelForZeroShotImageClassification.from_pretrained("patrickjohncyh/fashion-clip")
         model = inject_lora(model, lora_params)
-        model.to(device)
+        model = model.to(device)
 
         run_experiment(model, processor, train_loader, embed_loader, val_loader, train_params['training'], experiment_name, device, sampler)
+
 
     

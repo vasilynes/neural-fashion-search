@@ -13,6 +13,7 @@ train:
     pin_memory: True
   lora:
     lora8:
+      resume: False
       r: 8
       lora_alpha: 16
       dropout: 0.1

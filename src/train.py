@@ -99,7 +99,7 @@ def set_hard_negatives(model, processor, embed_loader, device, experiment_params
     hard_negatives = mine_hard_negatives(image_embeds, text_embeds, top_k=experiment_params['top_k'])
     sampler.update_hard_negatives(hard_negatives)
 
-def run_experiment(model, processor, train_loader, embed_loader, val_loader, experiment_params, experiment_name, device, sampler):
+def run_experiment(model, processor, train_loader, embed_loader, val_loader, experiment_params, experiment_name, device, sampler, training_state=None):
     params_to_update = [p for p in model.parameters() if p.requires_grad]
 
     optimizer = optim.AdamW(params_to_update, experiment_params['lr'])
@@ -107,12 +107,21 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
     total_steps = experiment_params['epochs'] * len(train_loader)   
     scheduler = get_scheduler(optimizer, total_steps)
 
-    accumulation_steps = experiment_params['accumulation_steps']
+    if training_state:
+        optimizer.load_state_dict(training_state['optimizer_state_dict'])
+        scheduler.load_state_dict(training_state['scheduler_state_dict'])
+        best_val_loss = training_state['best_val_loss']
+        patience_count = training_state['patience_count']
+        start_epoch = training_state['epoch'] + 1
+    else: 
+        best_val_loss = float('inf')
+        patience_count = 0
+        start_epoch = 0
 
-    best_val_loss = float('inf')
-    patience_count = 0
+    accumulation_steps = experiment_params['accumulation_steps']
     patience = experiment_params['patience']
-    for epoch in range(experiment_params['epochs']):
+
+    for epoch in range(start_epoch, experiment_params['epochs']):
         model.eval()
         set_hard_negatives(model, processor, embed_loader, device, experiment_params, sampler)
 
@@ -167,8 +176,19 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             patience_count = 0
-            Path(f"checkpoints/{experiment_name}_best").mkdir(parents=True, exist_ok=True)
+
+            checkpoint_dir = Path(f"checkpoints/{experiment_name}_best")
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
             model.save_pretrained(f"checkpoints/{experiment_name}_best")
+            
+            torch.save({
+                'epoch': epoch,
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'best_val_loss': best_val_loss,
+                'patience_count': patience_count,
+            }, checkpoint_dir / 'training_state.pt')
         else:
             patience_count += 1
             if patience_count >= patience:
@@ -180,15 +200,26 @@ def train_routine(train_loader, embed_loader, val_loader, train_params, sampler)
     processor = AutoProcessor.from_pretrained("patrickjohncyh/fashion-clip", use_fast=False)
 
     for experiment_name, lora_params in train_params['lora'].items():
-        print(f"\nStarting experiment: {experiment_name}...")
+        if lora_params['resume']:
+            print(f"\nResuming experiment: {experiment_name}...")
 
-        sampler.update_hard_negatives({})
+            checkpoint_dir = Path(f"checkpoints/{experiment_name}_best")
+            if not checkpoint_dir.exists():
+                print(f"Experiment {experiment_name} has nothing to resume from")
+                continue
+    
+            model = AutoModelForZeroShotImageClassification.from_pretrained(checkpoint_dir)
+            training_state = torch.load(checkpoint_dir / 'training_state.pt')
+        else: 
+            print(f"\nStarting experiment: {experiment_name}...")
 
-        model = AutoModelForZeroShotImageClassification.from_pretrained("patrickjohncyh/fashion-clip")
-        model = inject_lora(model, lora_params)
+            model = AutoModelForZeroShotImageClassification.from_pretrained("patrickjohncyh/fashion-clip")
+            model = inject_lora(model, lora_params)
+            training_state = None
+
         model = model.to(device)
 
-        run_experiment(model, processor, train_loader, embed_loader, val_loader, train_params['training'], experiment_name, device, sampler)
+        run_experiment(model, processor, train_loader, embed_loader, val_loader, train_params['training'], experiment_name, device, sampler, training_state)
 
 
     

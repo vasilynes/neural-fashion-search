@@ -94,6 +94,11 @@ def mine_hard_negatives(image_embeds, text_embeds, top_k=10):
 
     return hard_negatives
 
+def set_hard_negatives(model, processor, embed_loader, device, experiment_params, sampler):
+    image_embeds, text_embeds = embed_dataset(model, processor, embed_loader, device)
+    hard_negatives = mine_hard_negatives(image_embeds, text_embeds, top_k=experiment_params['top_k'])
+    sampler.update_hard_negatives(hard_negatives)
+
 def run_experiment(model, processor, train_loader, embed_loader, val_loader, experiment_params, experiment_name, device, sampler):
     params_to_update = [p for p in model.parameters() if p.requires_grad]
 
@@ -108,6 +113,9 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
     patience_count = 0
     patience = experiment_params['patience']
     for epoch in range(experiment_params['epochs']):
+        model.eval()
+        set_hard_negatives(model, processor, embed_loader, device, experiment_params, sampler)
+
         model.train()
         optimizer.zero_grad()
         train_loss = 0.0
@@ -129,8 +137,7 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
             if (batch_idx + 1) % accumulation_steps == 0:
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step()
-            
+                scheduler.step()            
 
         if (batch_idx + 1) % accumulation_steps != 0:
             optimizer.step()
@@ -167,10 +174,6 @@ def run_experiment(model, processor, train_loader, embed_loader, val_loader, exp
             if patience_count >= patience:
                 print(f"Early stopping triggered at epoch {epoch+1}")
                 break
-
-        image_embeds, text_embeds = embed_dataset(model, processor, embed_loader, device)
-        hard_negatives = mine_hard_negatives(image_embeds, text_embeds, top_k=experiment_params['top_k'])
-        sampler.update_hard_negatives(hard_negatives)
         
 def train_routine(train_loader, embed_loader, val_loader, train_params, sampler):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

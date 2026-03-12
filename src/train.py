@@ -141,7 +141,8 @@ class Trainer:
         params_to_update = [p for p in self.model.parameters() if p.requires_grad]
 
         self.optimizer = optim.AdamW(params_to_update, self.experiment_params['lr'])
-        total_steps = self.experiment_params['epochs'] * len(self.train_loader)  
+        steps_per_epoch = (len(self.train_loader) + accumulation_steps - 1) // accumulation_steps
+        total_steps = self.experiment_params['epochs'] * steps_per_epoch
         warmup_steps = int(0.1 * total_steps) 
         self.scheduler = self.get_scheduler(total_steps, warmup_steps)
 
@@ -163,9 +164,10 @@ class Trainer:
             
             train_loss = 0.0
             for batch_idx, batch in enumerate(self.train_loader):
-                loss = self.get_batch_loss(batch) / accumulation_steps
-                loss.backward()
+                loss = self.get_batch_loss(batch)
                 train_loss += loss.item()
+                loss /= accumulation_steps
+                loss.backward()
 
                 if (batch_idx + 1) % accumulation_steps == 0:
                     self.optimizer.step()

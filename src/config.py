@@ -2,9 +2,41 @@ from pathlib import Path
 from dataclasses import dataclass, field
 import os
 
+USERNAME = ''
+DATASET = ''
+
 @dataclass
 class Config:
-    DATA_DIR: Path = Path(os.getenv('DATA_DIR', './data'))
+    IS_KAGGLE: bool  = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
+
+    @property
+    def BASE_DIR(self) -> Path:
+        if self.IS_KAGGLE:
+            return Path('/kaggle/working')
+        else:
+            return Path('.')  
+        
+    @property
+    def INPUT_DIR(self) -> Path:
+        if self.IS_KAGGLE:
+            return Path(f"/kaggle/input/datasets/{USERNAME}")
+        else: 
+            return Path('.') 
+
+    @property
+    def DATA_DIR(self) -> Path:
+        if self.IS_KAGGLE:
+            return self.INPUT_DIR / DATASET
+        else:
+            return Path(os.getenv('DATA_DIR', './data'))
+        
+    @property
+    def CHECKPOINT_DIR(self):
+        return self.BASE_DIR / 'checkpoints'
+    
+    @property
+    def LOG_DIR(self):
+        return self.BASE_DIR / 'logs'
 
     @property
     def PROCESSED_DATA_DIR(self) -> Path:
@@ -31,7 +63,7 @@ class Config:
         return self.PROCESSED_DATA_DIR / 'articles_val.parquet'
 
     CLIP_IMAGE_STATS: dict = field(default_factory=lambda: {
-        'mean': (0.48145466, 0.4578275, 0.40821073),
+        'mean': (0.48145466, 0.4578275, 0.40821073),        # CLIP images stats
         'std': (0.26862954, 0.26130258, 0.27577711)
     })
 

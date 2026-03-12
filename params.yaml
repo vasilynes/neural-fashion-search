@@ -4,10 +4,10 @@ train:
     epochs: 10
     patience: 3
     accumulation_steps: 4
-    hard_negatives_per_anchor: 1
+    hard_negatives_per_anchor: 3
     top_k: 10
   dataloader:
-    batch_size: 32
+    batch_size: 256
     shuffle: True
     num_workers: auto
     pin_memory: True
@@ -20,16 +20,9 @@ train:
       vision_layers: [8, 9, 10, 11]
       text_layers: [6, 7, 8, 9, 10, 11]
       projections: ['q_proj', 'k_proj']
-    lora16:
-      r: 16
-      lora_alpha: 32
-      dropout: 0.1
-      vision_layers: [8, 9, 10, 11]
-      text_layers: [6, 7, 8, 9, 10, 11]
-      projections: ['q_proj', 'k_proj']
 eval: &eval_params    # boilerplate
   dataloader:
-    batch_size: 32
+    batch_size: 256
     shuffle: False
     num_workers: auto
     pin_memory: True

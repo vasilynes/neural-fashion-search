@@ -2,3 +2,6 @@ data/
 venv/
 notebooks/
 __pycache__
+kaggle_training.ipynb
+logs
+checkpoints

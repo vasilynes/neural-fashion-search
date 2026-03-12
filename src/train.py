@@ -7,9 +7,11 @@ from faiss import IndexFlatIP
 import torch.nn.functional as F
 import logging
 import sys
+from config import config
 
 def setup_logger(name, log_file, level=logging.INFO):  
-    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+    log_path = config.LOG_DIR / log_file
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger(name)
     logger.setLevel(level) 
     
@@ -80,7 +82,7 @@ class Trainer:
         self.start_epoch = self.training_state['epoch'] + 1
 
     def save_state(self, epoch):
-        checkpoint_dir = Path(f"checkpoints/{self.experiment_name}_best")
+        checkpoint_dir = config.CHECKPOINT_DIR / f"{self.experiment_name}_best"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         self.model.save_pretrained(f"checkpoints/{self.experiment_name}_best")

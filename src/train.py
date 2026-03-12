@@ -5,6 +5,28 @@ from torch import optim
 from pathlib import Path
 from faiss import IndexFlatIP
 import torch.nn.functional as F
+import logging
+import sys
+
+def setup_logger(name, log_file, level=logging.INFO):  
+    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger(name)
+    logger.setLevel(level) 
+    
+    if not logger.handlers:
+        fh = logging.FileHandler(log_file)
+        fh.setLevel(level) 
+        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logger.addHandler(fh)
+    
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(level)
+        ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))  
+        logger.addHandler(ch)
+    
+    return logger
+
+logger = setup_logger("training", "logs/training.log")
 
 class Trainer:
     def __init__(
@@ -18,7 +40,8 @@ class Trainer:
             training_state,
             train_loader,
             embed_loader, 
-            val_loader
+            val_loader,
+            logger,
         ):
         self.model = model
         self.processor = processor
@@ -30,6 +53,7 @@ class Trainer:
         self.train_loader = train_loader
         self.embed_loader = embed_loader
         self.val_loader = val_loader
+        self.logger = logger
 
     def get_scheduler(self, total_steps, warmup_steps): 
         warmup_scheduler = optim.lr_scheduler.LinearLR(
@@ -139,11 +163,13 @@ class Trainer:
 
     def run(self):
         params_to_update = [p for p in self.model.parameters() if p.requires_grad]
-
         self.optimizer = optim.AdamW(params_to_update, self.experiment_params['lr'])
+
+        accumulation_steps = self.experiment_params['accumulation_steps']
         steps_per_epoch = (len(self.train_loader) + accumulation_steps - 1) // accumulation_steps
         total_steps = self.experiment_params['epochs'] * steps_per_epoch
         warmup_steps = int(0.1 * total_steps) 
+
         self.scheduler = self.get_scheduler(total_steps, warmup_steps)
 
         if self.training_state:
@@ -152,7 +178,6 @@ class Trainer:
             self.best_val_loss = float('inf')
             self.start_epoch = 0
 
-        accumulation_steps = self.experiment_params['accumulation_steps']
         patience = self.experiment_params['patience']
         patience_count = 0
         for epoch in range(self.start_epoch, self.experiment_params['epochs']):
@@ -174,7 +199,7 @@ class Trainer:
                     self.optimizer.zero_grad()
                     self.scheduler.step()            
 
-            if (batch_idx + 1) % accumulation_steps != 0:
+            if len(self.train_loader) % accumulation_steps != 0:
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 self.scheduler.step()
@@ -184,7 +209,7 @@ class Trainer:
             self.model.eval()
             avg_val_loss = self.get_val_loss()
 
-            print(f"Epoch {epoch+1}/{self.experiment_params['epochs']} | train loss: {avg_train_loss:.4f} | val loss: {avg_val_loss:.4f}")
+            self.logger.info(f"Epoch {epoch+1}/{self.experiment_params['epochs']} | train loss: {avg_train_loss:.4f} | val loss: {avg_val_loss:.4f}")
 
             if avg_val_loss < self.best_val_loss:
                 self.best_val_loss = avg_val_loss
@@ -193,7 +218,7 @@ class Trainer:
             else:
                 patience_count += 1
                 if patience_count >= patience:
-                    print(f"Early stopping triggered at epoch {epoch+1}")
+                    self.logger.info(f"Early stopping triggered at epoch {epoch+1}")
                     return
 
 def inject_lora(model, lora_params):
@@ -205,9 +230,9 @@ def inject_lora(model, lora_params):
         for i in lora_params['text_layers'] for proj in lora_params['projections']
     ]
 
-    print(f"Target modules ({len(target_modules)}):")
+    logger.info(f"Target modules ({len(target_modules)}):")
     for m in target_modules:
-        print(f"  {m}")
+        logger.info(f"  {m}")
 
     lora_config = LoraConfig(
         r=lora_params['r'], 
@@ -220,7 +245,7 @@ def inject_lora(model, lora_params):
     model.print_trainable_parameters()
 
     return model 
-        
+
 def train_routine(train_loader, embed_loader, val_loader, train_params, sampler):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     processor = AutoProcessor.from_pretrained("patrickjohncyh/fashion-clip", use_fast=False)
@@ -229,17 +254,17 @@ def train_routine(train_loader, embed_loader, val_loader, train_params, sampler)
         model = AutoModelForZeroShotImageClassification.from_pretrained("patrickjohncyh/fashion-clip")
 
         if lora_params['resume']:
-            print(f"\nResuming experiment: {experiment_name}...")
+            logger.info(f"\nResuming experiment: {experiment_name}...")
 
             checkpoint_dir = Path(f"checkpoints/{experiment_name}_best")
             if not checkpoint_dir.exists():
-                print(f"Experiment {experiment_name} has nothing to resume from")
+                logger.warning(f"Experiment {experiment_name} has nothing to resume from")
                 continue
     
             model = PeftModel.from_pretrained(model, checkpoint_dir)
             training_state = torch.load(checkpoint_dir / 'training_state.pt', map_location=device)
         else: 
-            print(f"\nStarting experiment: {experiment_name}...")
+            logger.info(f"\nStarting experiment: {experiment_name}...")
             model = inject_lora(model, lora_params)
             training_state = None
 
@@ -255,7 +280,10 @@ def train_routine(train_loader, embed_loader, val_loader, train_params, sampler)
             training_state,
             train_loader,
             embed_loader, 
-            val_loader
+            val_loader,
+            logger
         )
 
         trainer.run()
+
+        logger.info(f"\nExperiment: {experiment_name} is finished")

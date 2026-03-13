@@ -27,4 +27,8 @@ eval: &eval_params    # boilerplate
     num_workers: auto
     pin_memory: True
 val: *eval_params
-test: *eval_params
+test: 
+  <<: *eval_params
+  checkpoints: ['baseline', 'lora8_best']
+  filtering_features: ['colour_group_name', 'product_type_name']
+  k_values: [1, 5, 10]

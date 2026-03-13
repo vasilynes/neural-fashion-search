@@ -7,7 +7,7 @@ from faiss import IndexFlatIP
 import torch.nn.functional as F
 import logging
 import sys
-from config import config
+from src.config import config
 
 def setup_logger(name, log_file, level=logging.INFO):  
     log_path = config.LOG_DIR / log_file
@@ -250,10 +250,10 @@ def inject_lora(model, lora_params):
 
 def train_routine(train_loader, embed_loader, val_loader, train_params, sampler):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    processor = AutoProcessor.from_pretrained("patrickjohncyh/fashion-clip", use_fast=False)
+    processor = AutoProcessor.from_pretrained('patrickjohncyh/fashion-clip', use_fast=False)
 
     for experiment_name, lora_params in train_params['lora'].items():
-        model = AutoModelForZeroShotImageClassification.from_pretrained("patrickjohncyh/fashion-clip")
+        model = AutoModelForZeroShotImageClassification.from_pretrained('patrickjohncyh/fashion-clip')
 
         if lora_params['resume']:
             logger.info(f"\nResuming experiment: {experiment_name}...")

@@ -82,21 +82,38 @@ class FashionDataset:
     def for_split(cls, split, config):
         if split not in ('train', 'val', 'test'):
             raise ValueError(f"Invalid split: '{split}'")
-        
         manifest_path = getattr(config, f"{split.upper()}_FILE")
         return cls(manifest_path)
 
-    def __init__(self, manifest_path):
+    def __init__(self, manifest_path, filter_col=None, filter_val=None):
         self.manifest_path = Path(manifest_path)
         if not self.manifest_path.is_file():
             raise FileNotFoundError(f"Manifest file not found: {self.manifest_path}")
-        self.df = pd.read_parquet(self.manifest_path)
+        
+        self._df = pd.read_parquet(self.manifest_path)
 
+        if filter_col and filter_val:
+            temp_col = self._df[filter_col].replace('', 'unknown')
+            mask = temp_col == filter_val
+            self.indices = mask[mask].index.tolist()
+        else:
+            self.indices = list(range(len(self._df)))
+    
+    def filter(self, filter_col, filter_val):
+        new_ds = FashionDataset.__new__(FashionDataset)
+        new_ds.manifest_path = self.manifest_path
+        new_ds._df = self._df 
+        
+        temp_col = self._df[filter_col].replace('', 'unknown')
+        mask = temp_col == filter_val
+        new_ds.indices = mask[mask].index.tolist()
+        return new_ds
+        
     def __len__(self):
-        return len(self.df)
+        return len(self.indices)
     
     def __getitem__(self, idx):
-        row = self.df.iloc[idx]  
+        row = self._df.iloc[self.indices[idx]]  
         image_path = row['image_path']
         parts = Path(image_path.replace('\\', '/')).parts  # ('data', 'images', '069', '0694236008.jpg')
         image_path = config.DATA_DIR.joinpath(*parts[1:])   # skip 'data', join rest

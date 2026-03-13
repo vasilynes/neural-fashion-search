@@ -20,8 +20,7 @@ def get_parser():
     train_parser.add_argument('--params', type=str, default='params.yaml', help='Training params file')
 
     test_parser = subparsers.add_parser('test', help='Test FahionCLIP model')
-    test_parser.add_argument('--model_path', type=str, required=True, help='Path to trained model')
-    test_parser.add_argument('--test_data', type=str, required=True, help='Path to test data')
+    test_parser.add_argument('--params', type=str, default='params.yaml', help='Test params file')
 
     return parser
 

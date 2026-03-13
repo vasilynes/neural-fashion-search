@@ -4,6 +4,8 @@ from src.data import get_dataloader
 from src.config import config
 from src.cli import load_params
 from src.data import HardNegativesBatchSampler, FashionDataset
+from src.test import test_routine
+import pandas as pd
 
 def train_handler(args):
     params = load_params(args.params)
@@ -26,7 +28,21 @@ def train_handler(args):
     train_routine(train_loader, embed_loader, val_loader, params['train'], sampler)
 
 def test_handler(args):
-    pass
+    params = load_params(args.params)
+    test_loaders = {}
+
+    test_dataset = FashionDataset.for_split('test', config)
+    test_loaders['full'] = get_dataloader(test_dataset, params['test']['dataloader'])
+
+    test_df = pd.read_parquet(config.TEST_FILE)
+    for col in params['test']['filtering_features']:
+        unique_vals = test_df[col].dropna().replace('', 'unknown').unique()
+        for val in unique_vals:
+            filtered_dataset = test_dataset.filter(col, val)
+            safe_name = f"{col}_{val.lower().replace(' ', '_')}"
+            test_loaders[safe_name] = get_dataloader(filtered_dataset, params['test']['dataloader'])
+
+    test_routine(test_loaders, params['test'])
 
 def split_handler(args):
     """Handles stratified split of the dataset."""
@@ -43,7 +59,7 @@ def split_handler(args):
         random_state=args.random_state,
         min_samples_per_class=args.min_samples_per_class
     )
-    print("Split completed successfully!")
+    print("Split completed")
 
 command_handlers = {
     'split': split_handler,

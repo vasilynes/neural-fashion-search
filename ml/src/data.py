@@ -75,6 +75,7 @@ class CollateFn:
             'product_type_name': [item['product_type_name'] for item in batch],
             'detail_desc': [item['detail_desc'] for item in batch],
             'image_path': [item['image_path'] for item in batch],
+            'article_id': [item['article_id'] for item in batch],
         }
 
 class FashionDataset:
@@ -127,6 +128,7 @@ class FashionDataset:
             'detail_desc': row['detail_desc'],
             'caption': row['caption'],
             'image_path': str(image_path),
+            'article_id': row['article_id'],
         }
     
 def get_dataloader(dataset, loader_params, augment=False, sampler=None):

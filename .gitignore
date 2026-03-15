@@ -6,5 +6,6 @@ logs
 checkpoints
 model_testing.ipynb
 results
-app
+app/src
+app/venv
 embeddings

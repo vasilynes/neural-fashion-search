@@ -7,5 +7,7 @@ seaborn
 pyarrow
 sentence-transformers
 imagehash
-
-
+fastembed
+transformers
+peft
+numpy

@@ -6,3 +6,5 @@ logs
 checkpoints
 model_testing.ipynb
 results
+app
+embeddings

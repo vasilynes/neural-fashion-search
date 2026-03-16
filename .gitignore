@@ -1,11 +1,9 @@
-data/
-venv/
-notebooks/
+data
+venv
+notebooks
 kaggle_training.ipynb
 logs
 checkpoints
 model_testing.ipynb
 results
-app/src
-app/venv
 embeddings

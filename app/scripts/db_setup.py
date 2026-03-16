@@ -7,9 +7,9 @@ import pandas as pd
 
 client = QdrantClient(host='localhost', port=6333)
 
-if not client.collection_exists('fashion database'):
+if not client.collection_exists('fashion'):
     client.create_collection(
-        collection_name='fashion database',
+        collection_name='fashion',
         vectors_config={
             'image': VectorParams(size=512, distance=Distance.COSINE),
             'text': VectorParams(size=512, distance=Distance.COSINE),
@@ -56,7 +56,7 @@ for i, article_id in enumerate(article_ids):
 batch_size = 256
 for start in range(0, len(points), batch_size):
     client.upsert(
-        collection_name='fashion database',
+        collection_name='fashion',
         points=points[start:start + batch_size]
     )
     print(f"Indexed {min(start + batch_size, len(points))}/{len(points)}")

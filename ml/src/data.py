@@ -28,6 +28,11 @@ class SquarePad:
             (p_left, p_top, p_right, p_bottom), 
             fill=self.fill
         )
+    
+def preprocess_image(image):
+    image.thumbnail((256, 256), Image.BICUBIC)
+    image = SquarePad()(image)
+    return image
 
 def text_dropout(color, product, desc, caption):
     if not color or not product:
@@ -298,3 +303,4 @@ def stratified_split(
     print(f"Test: {test_path}")
 
     return train_df, val_df, test_df
+

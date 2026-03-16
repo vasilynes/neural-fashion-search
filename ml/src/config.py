@@ -36,7 +36,7 @@ class Config:
         if self.IS_KAGGLE:
             return self.INPUT_DIR / DATASET
         else:
-            return Path(os.getenv('DATA_DIR', './data'))
+            return Path(os.getenv('DATA_DIR', self.BASE_DIR / 'data'))
         
     @property
     def CHECKPOINT_DIR(self):

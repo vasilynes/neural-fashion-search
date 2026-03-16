@@ -1,6 +1,6 @@
 from pathlib import Path 
-from src.data import FashionDataset, get_dataloader
-from src.config import config
+from ml.src.data import FashionDataset, get_dataloader
+from ml.src.config import config
 import os 
 from transformers import AutoProcessor, AutoModelForZeroShotImageClassification
 from peft import PeftModel

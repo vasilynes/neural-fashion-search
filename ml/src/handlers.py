@@ -1,10 +1,10 @@
-from src.data import stratified_split
-from src.train import train_routine 
-from src.data import get_dataloader
-from src.config import config
-from src.cli import load_params
-from src.data import HardNegativesBatchSampler, FashionDataset
-from src.test import test_routine
+from .data import stratified_split
+from .train import train_routine 
+from .data import get_dataloader
+from .config import config
+from .cli import load_params
+from .data import HardNegativesBatchSampler, FashionDataset
+from .test import test_routine
 import pandas as pd
 
 def train_handler(args):

@@ -8,7 +8,7 @@ from PIL import ImageOps
 import random
 from torch.utils.data import Sampler
 import torch
-from src.config import config
+from .config import config
 
 class SquarePad:
     def __init__(self, fill=(255, 255, 255)):

@@ -1,6 +1,6 @@
-from src.config import config
-from src.cli import get_parser, load_params
-from src.handlers import command_handlers
+from ml.src.config import config
+from ml.src.cli import get_parser, load_params
+from ml.src.handlers import command_handlers
 
 if __name__ == '__main__':
     parser = get_parser()

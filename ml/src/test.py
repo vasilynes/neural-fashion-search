@@ -1,6 +1,6 @@
 from transformers import AutoProcessor, AutoModelForZeroShotImageClassification
 from peft import PeftModel
-from src.config import config
+from .config import config
 import torch
 import torch.nn.functional as F
 import json
@@ -60,7 +60,7 @@ def test_routine(test_loaders, test_params):
     for checkpoint in test_params['checkpoints']:
         model = AutoModelForZeroShotImageClassification.from_pretrained('patrickjohncyh/fashion-clip')
         if checkpoint != 'baseline':
-            model = PeftModel.from_pretrained(model, config.CHECKPOINT_DIR / checkpoint)
+            model = PeftModel.from_pretrained(model, str(config.CHECKPOINT_DIR / checkpoint))
         model.to(device)
 
         full_loader = test_loaders['full']

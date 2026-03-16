@@ -14,7 +14,7 @@ class Config:
         if self.IS_KAGGLE:
             return Path('/kaggle/working')
         else:
-            return Path('.')  
+            return Path(os.getenv('BASE_DIR', str(Path(__file__).parent.parent)))  
         
     @property
     def RESULTS_DIR(self) -> Path:
@@ -29,7 +29,7 @@ class Config:
         if self.IS_KAGGLE:
             return Path(f"/kaggle/input/datasets/{USERNAME}")
         else: 
-            return Path('.') 
+            return self.BASE_DIR
 
     @property
     def DATA_DIR(self) -> Path:
@@ -78,3 +78,4 @@ class Config:
     PAD_COLOR: tuple = (255, 255, 255)      # white
 
 config = Config()
+

@@ -7,7 +7,7 @@ from faiss import IndexFlatIP
 import torch.nn.functional as F
 import logging
 import sys
-from src.config import config
+from .config import config
 
 def setup_logger(name, log_file, level=logging.INFO):  
     log_path = config.LOG_DIR / log_file

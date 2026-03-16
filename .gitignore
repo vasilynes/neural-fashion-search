@@ -7,3 +7,5 @@ checkpoints
 model_testing.ipynb
 results
 embeddings
+frontend
+app

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Request, HTTPException
+from fastapi import FastAPI, File, UploadFile, Request, HTTPException, Query
 from fastapi.responses import FileResponse
 from PIL import Image
 import io
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
     df = pd.read_parquet(config.MANIFEST_FILE).set_index('article_id')
 
     app.state.search_handler = search_handler
-    app.state.state_df = df
+    app.state.df = df
 
     logger.info(f"Model loaded from {config.CHECKPOINT_DIR / 'lora8_best'}")
     logger.info(f"On device: {device}")
@@ -61,7 +61,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='Multimodal Search Engine', lifespan=lifespan)
 
 @app.post('/search/image')
-async def search_by_image(request: Request, file: UploadFile = File(...)):
+async def search_by_image(
+    request: Request,  
+    file: UploadFile = File(...),
+    limit: int = Query(10)
+):
     image = Image.open(io.BytesIO(await file.read())).convert('RGB')
     image = preprocess_image(image)
     results = request.app.state.search_handler.search_by_image(image)
@@ -74,22 +78,31 @@ class TextQuery(BaseModel):
 @app.post('/search/text')
 async def search_by_text(request: Request, body: TextQuery):
     results = request.app.state.search_handler.search_by_text(body.query, body.limit)
-    return results
+    return [
+        {
+            'article_id': r.payload['article_id'],
+            'caption': r.payload['caption'],
+            'score': r.score,
+            'colour_group_name': r.payload['colour_group_name'],
+            'product_type_name': r.payload['product_type_name'],
+        }
+        for r in results.points
+    ]
 
 @app.get('/images/{article_id}')
 async def get_image(article_id: str, request: Request):
-    df = request.app.state_df
+    df = request.app.state.df
 
     if article_id not in df.index:
         raise HTTPException(status_code=404, detail=f"Article {article_id} not found")
 
     row = df.loc[article_id]
     image_path = Path(row['image_path'])
-    # image_path = Path(str(image_path).replace('\\', '/'))
-    # parts = image_path.parts
-    # abs_path = config.DATA_DIR / Path(*parts[1:])
+    image_path = Path(str(image_path).replace('\\', '/'))
+    parts = image_path.parts
+    abs_path = config.DATA_DIR / Path(*parts[1:])
 
-    if not image_path.exists():
+    if not abs_path.exists():
         raise HTTPException(status_code=404, detail=f"Image file not found")
     
-    return FileResponse(image_path, media_type='image_jpeg')
+    return FileResponse(abs_path, media_type='image_jpeg')

@@ -69,7 +69,16 @@ async def search_by_image(
     image = Image.open(io.BytesIO(await file.read())).convert('RGB')
     image = preprocess_image(image)
     results = request.app.state.search_handler.search_by_image(image)
-    return results
+    return [
+        {
+            'article_id': r.payload['article_id'],
+            'caption': r.payload['caption'],
+            'score': r.score,
+            'colour_group_name': r.payload['colour_group_name'],
+            'product_type_name': r.payload['product_type_name'],
+        }
+        for r in results.points
+    ]
 
 class TextQuery(BaseModel):
     query: str

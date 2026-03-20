@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from qdrant_client.models import SparseVector, Fusion, FusionQuery
 
-class SearchHandler:
+class SearchService:
     def __init__(self, client, processor, device, model, sparse_model):
         self.client = client
         self.processor = processor

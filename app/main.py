@@ -11,7 +11,7 @@ from peft import PeftModel
 from ml.src.config import config
 import logging
 from ml.src.data import preprocess_image
-from app.services.search import SearchHandler
+from app.services.search import SearchService
 import pandas as pd
 from pathlib import Path
 from pydantic import BaseModel
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 
     sparse_model = SparseTextEmbedding(model_name='prithivida/Splade_PP_en_v1')
 
-    search_handler = SearchHandler(
+    search_service = SearchService(
         client,
         processor,
         device,
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 
     df = pd.read_parquet(config.MANIFEST_FILE).set_index('article_id')
 
-    app.state.search_handler = search_handler
+    app.state.search_service = search_service
     app.state.df = df
 
     logger.info(f"Model loaded from {config.CHECKPOINT_DIR / 'lora8_best'}")
@@ -68,7 +68,7 @@ async def search_by_image(
 ):
     image = Image.open(io.BytesIO(await file.read())).convert('RGB')
     image = preprocess_image(image)
-    results = request.app.state.search_handler.search_by_image(image)
+    results = request.app.state.search_service.search_by_image(image)
     return [
         {
             'article_id': r.payload['article_id'],
@@ -86,7 +86,7 @@ class TextQuery(BaseModel):
 
 @app.post('/search/text')
 async def search_by_text(request: Request, body: TextQuery):
-    results = request.app.state.search_handler.search_by_text(body.query, body.limit)
+    results = request.app.state.search_service.search_by_text(body.query, body.limit)
     return [
         {
             'article_id': r.payload['article_id'],

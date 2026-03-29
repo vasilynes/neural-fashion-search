@@ -51,7 +51,7 @@ class SearchService:
         sparse = self.embed_text_sparse(query)
 
         return self.client.query_points(
-            collection_name='fashion database',
+            collection_name='fashion_database',
             prefetch=[
                 {'query': dense, 'using': 'text', 'limit': limit * 2},
                 {'query': sparse, 'using': 'text_sparse', 'limit': limit * 2},
@@ -64,7 +64,7 @@ class SearchService:
         dense = self.embed_image(image)
 
         return self.client.query_points(
-            collection_name='fashion database',
+            collection_name='fashion_database',
             query=dense,
             using='image',
             limit=limit

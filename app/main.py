@@ -25,8 +25,7 @@ logging.basicConfig(
     ]
 )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def create_search_service():
     client = QdrantClient(host='localhost', port=6333)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,6 +45,11 @@ async def lifespan(app: FastAPI):
         sparse_model,
     )
 
+    return search_service, device
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    search_service, device = create_search_service()
     df = pd.read_parquet(config.MANIFEST_FILE).set_index('article_id')
 
     app.state.search_service = search_service
@@ -72,7 +76,7 @@ async def search_by_image(
     return [
         {
             'article_id': r.payload['article_id'],
-            'caption': r.payload['caption'],
+            'detail_desc': r.payload['detail_desc'],
             'score': r.score,
             'colour_group_name': r.payload['colour_group_name'],
             'product_type_name': r.payload['product_type_name'],
@@ -90,7 +94,7 @@ async def search_by_text(request: Request, body: TextQuery):
     return [
         {
             'article_id': r.payload['article_id'],
-            'caption': r.payload['caption'],
+            'detail_desc': r.payload['detail_desc'],
             'score': r.score,
             'colour_group_name': r.payload['colour_group_name'],
             'product_type_name': r.payload['product_type_name'],

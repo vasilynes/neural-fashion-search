@@ -7,9 +7,9 @@ import pandas as pd
 
 client = QdrantClient(host='localhost', port=6333)
 
-if not client.collection_exists('fashion database'):
+if not client.collection_exists('fashion_database'):
     client.create_collection(
-        collection_name='fashion database',
+        collection_name='fashion_database',
         vectors_config={
             'image': VectorParams(size=512, distance=Distance.COSINE),
             'text': VectorParams(size=512, distance=Distance.COSINE),
@@ -26,7 +26,7 @@ sparse_matrix = sp.load_npz('ml/embeddings/sparse_embeddings.npz')
 with open('ml/embeddings/article_ids.json') as f:
     article_ids = json.load(f)
 
-df = pd.read_parquet('ml/data/articles.parquet').set_index('article_id')
+df = pd.read_parquet('ml/data/dataset/articles.parquet').set_index('article_id')
 
 points = []
 for i, article_id in enumerate(article_ids):
@@ -45,7 +45,7 @@ for i, article_id in enumerate(article_ids):
         },
         payload={
             'article_id': article_id,
-            'caption': row['caption'],
+            'detail_desc': row['detail_desc'],
             'colour_group_name': row['colour_group_name'],
             'product_type_name': row['product_type_name'],
             'image_path': str(row['image_path'])
@@ -56,7 +56,7 @@ for i, article_id in enumerate(article_ids):
 batch_size = 256
 for start in range(0, len(points), batch_size):
     client.upsert(
-        collection_name='fashion database',
+        collection_name='fashion_database',
         points=points[start:start + batch_size]
     )
     print(f"Indexed {min(start + batch_size, len(points))}/{len(points)}")

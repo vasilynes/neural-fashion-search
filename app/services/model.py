@@ -10,9 +10,9 @@ class ModelService:
         self.dense_model = dense_model
         self.sparse_model = sparse_model
 
-    def embed_text(self, text):
+    def embed_text(self, batch):
         inputs = self.processor(
-            text=[text],
+            text=batch,
             truncation=True,
             padding=True, 
             return_tensors='pt',
@@ -26,7 +26,7 @@ class ModelService:
             text_embeds = text_outputs.pooler_output
             text_embeds = self.dense_model.base_model.model.text_projection(text_embeds)  # Project pooled output into the common space
 
-        return F.normalize(text_embeds, dim=-1).cpu().numpy()[0]
+        return F.normalize(text_embeds, dim=-1).cpu().numpy()
 
     def embed_image(self, image):
         inputs = self.processor(
@@ -43,9 +43,11 @@ class ModelService:
 
         return F.normalize(image_embeds, dim=-1).cpu().numpy()[0]
 
-    def embed_text_sparse(self, text):
-        embeds = list(self.sparse_model.embed([text]))[0]
-        return SparseVector(
+    def embed_text_sparse(self, batch):
+        embeddings = list(self.sparse_model.embed(batch))
+        return [
+            SparseVector(
             indices=embeds.indices.tolist(),
             values=embeds.values.tolist()
-        )
+        ) for embeds in embeddings
+        ]

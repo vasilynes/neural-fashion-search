@@ -8,8 +8,8 @@ class SearchService:
         self.model_service = model_service
 
     def search_by_text(self, query, limit=10):
-        dense = self.model_service.embed_text(query)
-        sparse = self.model_service.embed_text_sparse(query)
+        dense = self.model_service.embed_text([query])[0]
+        sparse = self.model_service.embed_text_sparse([query])[0]
 
         return self.client.query_points(
             collection_name=config.DB_NAME,

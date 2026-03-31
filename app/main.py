@@ -8,13 +8,13 @@ from qdrant_client import QdrantClient
 from transformers import AutoProcessor, AutoModelForZeroShotImageClassification
 from fastembed import SparseTextEmbedding
 from peft import PeftModel
-from ml.src.config import config
 import logging
 from ml.src.data import preprocess_image
 from app.services.search import SearchService
 import pandas as pd
 from pathlib import Path
 from pydantic import BaseModel
+from app.config import config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -25,17 +25,24 @@ logging.basicConfig(
     ]
 )
 
-def create_search_service():
-    client = QdrantClient(host='localhost', port=6333)
+def create_search_service(snapshot_path):
+    client = QdrantClient(host=config.DB_HOST, port=config.DB_PORT, timeout=300)
+    if snapshot_path:
+        existing = [c.name for c in client.get_collections().collections]
+        if config.DB_NAME not in existing:
+            client.recover_snapshot(
+                collection_name=config.DB_NAME,
+                location=snapshot_path
+            )
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    processor = AutoProcessor.from_pretrained('patrickjohncyh/fashion-clip', use_fast=False)
-    model = AutoModelForZeroShotImageClassification.from_pretrained('patrickjohncyh/fashion-clip')
-    model = PeftModel.from_pretrained(model, str(config.CHECKPOINT_DIR / 'lora8_best'))
+    processor = AutoProcessor.from_pretrained(config.DENSE_MODEL_NAME, use_fast=False)
+    model = AutoModelForZeroShotImageClassification.from_pretrained(config.DENSE_MODEL_NAME)
+    model = PeftModel.from_pretrained(model, str(config.PEFT_CHECKPOINT))
     model.to(device)
     model.eval()
 
-    sparse_model = SparseTextEmbedding(model_name='prithivida/Splade_PP_en_v1')
+    sparse_model = SparseTextEmbedding(model_name=config.SPARSE_MODEL_NAME)
 
     search_service = SearchService(
         client,
@@ -55,7 +62,7 @@ async def lifespan(app: FastAPI):
     app.state.search_service = search_service
     app.state.df = df
 
-    logger.info(f"Model loaded from {config.CHECKPOINT_DIR / 'lora8_best'}")
+    logger.info(f"Model loaded from {config.PEFT_CHECKPOINT}")
     logger.info(f"On device: {device}")
 
     yield

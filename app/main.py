@@ -15,6 +15,7 @@ import pandas as pd
 from pathlib import Path
 from pydantic import BaseModel
 from app.config import config
+from app.services.model import ModelService
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -25,6 +26,30 @@ logging.basicConfig(
     ]
 )
 
+def create_model_service():
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    processor = AutoProcessor.from_pretrained(config.DENSE_MODEL_NAME, use_fast=False)
+    model = AutoModelForZeroShotImageClassification.from_pretrained(config.DENSE_MODEL_NAME)
+    model = PeftModel.from_pretrained(model, str(config.PEFT_CHECKPOINT))
+    model.to(device)
+    model.eval()
+
+    logger.info(f"PEFT-model loaded from {config.PEFT_CHECKPOINT}")
+    logger.info(f"On device: {device}")
+
+    sparse_model = SparseTextEmbedding(model_name=config.SPARSE_MODEL_NAME)
+
+    logger.info(f"Sparse model {config.SPARSE_MODEL_NAME} is loaded")
+
+    model_service = ModelService(
+        processor,
+        device,
+        model,
+        sparse_model,
+    )
+
+    return model_service
+
 def create_search_service(snapshot_path):
     client = QdrantClient(host=config.DB_HOST, port=config.DB_PORT, timeout=300)
     if snapshot_path:
@@ -34,36 +59,25 @@ def create_search_service(snapshot_path):
                 collection_name=config.DB_NAME,
                 location=snapshot_path
             )
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    processor = AutoProcessor.from_pretrained(config.DENSE_MODEL_NAME, use_fast=False)
-    model = AutoModelForZeroShotImageClassification.from_pretrained(config.DENSE_MODEL_NAME)
-    model = PeftModel.from_pretrained(model, str(config.PEFT_CHECKPOINT))
-    model.to(device)
-    model.eval()
-
-    sparse_model = SparseTextEmbedding(model_name=config.SPARSE_MODEL_NAME)
+    
+    model_service = create_model_service()
 
     search_service = SearchService(
         client,
-        processor,
-        device,
-        model,
-        sparse_model,
+        model_service,
     )
 
-    return search_service, device
+    return search_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    search_service, device = create_search_service()
+    search_service = create_search_service()
     df = pd.read_parquet(config.MANIFEST_FILE).set_index('article_id')
 
     app.state.search_service = search_service
     app.state.df = df
 
-    logger.info(f"Model loaded from {config.PEFT_CHECKPOINT}")
-    logger.info(f"On device: {device}")
+    logger.info('App is started')
 
     yield
 

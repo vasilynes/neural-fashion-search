@@ -1,6 +1,4 @@
-import torch 
-import torch.nn.functional as F
-from qdrant_client.models import SparseVector, Fusion, FusionQuery
+from qdrant_client.models import Fusion, FusionQuery
 from app.services.model import ModelService
 from app.config import config
 

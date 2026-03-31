@@ -50,7 +50,7 @@ def create_model_service():
 
     return model_service
 
-def create_search_service(snapshot_path):
+def create_search_service(snapshot_path=None):
     client = QdrantClient(host=config.DB_HOST, port=config.DB_PORT, timeout=300)
     if snapshot_path:
         existing = [c.name for c in client.get_collections().collections]

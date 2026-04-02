@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from qdrant_client.models import SparseVector
 from peft import PeftModel
+from tqdm.notebook import tqdm
 
 class ModelService:
     def __init__(self, processor, device, dense_model: PeftModel, sparse_model):
@@ -17,7 +18,7 @@ class ModelService:
             padding=True, 
             return_tensors='pt',
             max_length=77
-        ).to(self.device)
+        ).to(self.dense_model.device)
 
         with torch.no_grad():
             # Manually replicating get_text_features from modeling_clip.py
@@ -32,7 +33,7 @@ class ModelService:
         inputs = self.processor(
             images=[image],
             return_tensors='pt',
-        ).to(self.device)
+        ).to(self.dense_model.device)
 
         with torch.no_grad():
             # Manually replicating get_image_features from modeling_clip.py
@@ -43,11 +44,15 @@ class ModelService:
 
         return F.normalize(image_embeds, dim=-1).cpu().numpy()[0]
 
-    def embed_text_sparse(self, batch):
-        embeddings = list(self.sparse_model.embed(batch))
+    def embed_text_sparse(self, queries, batch_size=32):
+        embeddings = list(tqdm(
+            self.sparse_model.embed(queries, batch_size=batch_size),
+            total=len(queries),
+            desc="Sparse embedding"
+        ))
         return [
             SparseVector(
             indices=embeds.indices.tolist(),
             values=embeds.values.tolist()
-        ) for embeds in embeddings
+            ) for embeds in embeddings
         ]

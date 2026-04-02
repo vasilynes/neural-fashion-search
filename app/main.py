@@ -16,6 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from app.config import config
 from app.services.model import ModelService
+import os
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -36,10 +37,11 @@ def create_model_service():
 
     logger.info(f"PEFT-model loaded from {config.PEFT_CHECKPOINT}")
     logger.info(f"On device: {device}")
-
-    sparse_model = SparseTextEmbedding(model_name=config.SPARSE_MODEL_NAME)
-
-    logger.info(f"Sparse model {config.SPARSE_MODEL_NAME} is loaded")
+    
+    sparse_model = SparseTextEmbedding(
+        model_name=config.SPARSE_MODEL_NAME, 
+        threads=os.cpu_count()
+    )
 
     model_service = ModelService(
         processor,
@@ -50,7 +52,7 @@ def create_model_service():
 
     return model_service
 
-def create_search_service(snapshot_path=None):
+def create_search_service(snapshot_path=None, model_service=None):
     client = QdrantClient(host=config.DB_HOST, port=config.DB_PORT, timeout=300)
     if snapshot_path:
         existing = [c.name for c in client.get_collections().collections]
@@ -60,7 +62,8 @@ def create_search_service(snapshot_path=None):
                 location=snapshot_path
             )
     
-    model_service = create_model_service()
+    if not model_service:
+        model_service = create_model_service()
 
     search_service = SearchService(
         client,

@@ -1,4 +1,4 @@
-from qdrant_client.models import Fusion, FusionQuery, QueryRequest, PrefetchQuery
+from qdrant_client.models import Fusion, FusionQuery, QueryRequest, Prefetch
 from app.services.model import ModelService
 from app.config import config
 
@@ -32,8 +32,8 @@ class SearchService:
         requests = [
             QueryRequest(
                 prefetch=[
-                    PrefetchQuery(query=dense, using='text', limit=limit * 2),
-                    PrefetchQuery(query=sparse, using='text_sparse', limit=limit * 2),
+                    Prefetch(query=dense, using='text', limit=limit * 2),
+                    Prefetch(query=sparse, using='text_sparse', limit=limit * 2),
                 ],
                 query=FusionQuery(fusion=Fusion.RRF),
                 limit=limit

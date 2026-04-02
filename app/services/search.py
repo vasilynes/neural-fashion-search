@@ -36,7 +36,8 @@ class SearchService:
                     Prefetch(query=sparse, using='text_sparse', limit=limit * 2),
                 ],
                 query=FusionQuery(fusion=Fusion.RRF),
-                limit=limit
+                limit=limit,
+                with_payload=True
             )
             for dense, sparse in zip(dense_batch, sparse_batch)
         ]

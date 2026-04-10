@@ -143,3 +143,7 @@ async def get_image(article_id: str, request: Request):
         raise HTTPException(status_code=404, detail=f"Image file not found")
     
     return FileResponse(abs_path, media_type='image_jpeg')
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "qdrant": "connected"}

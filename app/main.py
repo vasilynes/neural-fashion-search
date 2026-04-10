@@ -105,7 +105,7 @@ async def search_by_image(
             'colour_group_name': r.payload['colour_group_name'],
             'product_type_name': r.payload['product_type_name'],
         }
-        for r in results.points
+        for r in results
     ]
 
 class TextQuery(BaseModel):
@@ -123,7 +123,7 @@ async def search_by_text(request: Request, body: TextQuery):
             'colour_group_name': r.payload['colour_group_name'],
             'product_type_name': r.payload['product_type_name'],
         }
-        for r in results.points
+        for r in results
     ]
 
 @app.get('/images/{article_id}')

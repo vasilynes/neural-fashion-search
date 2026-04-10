@@ -8,8 +8,32 @@ class SearchService:
         self.model_service = model_service
 
     def search_by_text(self, query: str, limit=10):
-        return self.search_by_text_batch([query], limit=limit)[0]
+        return self.search_by_text_batch([query], limit=limit)[0].points
 
+    def search_by_text_batch(self, queries: list[str], limit=10):
+        dense_batch = self.model_service.embed_text(queries)
+        sparse_batch = self.model_service.embed_text_sparse(queries)
+        return self.search_by_embeddings(dense_batch, sparse_batch, limit)
+    
+    def search_by_embeddings(self, dense_batch: list, sparse_batch: list, limit=10):
+        requests = [
+            QueryRequest(
+                prefetch=[
+                    Prefetch(query=dense, using='text', limit=limit * 2),
+                    Prefetch(query=sparse, using='text_sparse', limit=limit * 2),
+                ],
+                query=FusionQuery(fusion=Fusion.RRF),
+                limit=limit,
+                with_payload=True
+            )
+            for dense, sparse in zip(dense_batch, sparse_batch)
+        ]
+
+        return self.client.query_batch_points(
+            collection_name=config.DB_NAME,
+            requests=requests,
+        )
+    
     def search_by_image(self, image, limit=10):
         dense = self.model_service.embed_image(image)
 
@@ -18,13 +42,8 @@ class SearchService:
             query=dense,
             using='image',
             limit=limit
-        )
+        ).points
     
-    def search_by_text_batch(self, queries: list[str], limit=10):
-        dense_batch = self.model_service.embed_text(queries)
-        sparse_batch = self.model_service.embed_text_sparse(queries)
-        return self.search_by_embeddings(dense_batch, sparse_batch, limit)
-
     def search_by_embeddings_alpha(self, dense_batch: list, sparse_batch: list, alpha=0.5, limit=10):
         dense_results = self.client.query_batch_points(
             collection_name=config.DB_NAME,
@@ -76,24 +95,4 @@ class SearchService:
             all_results.append(sorted_points)
         
         return all_results
-    
-    def search_by_embeddings(self, dense_batch: list, sparse_batch: list, limit=10):
-        requests = [
-            QueryRequest(
-                prefetch=[
-                    Prefetch(query=dense, using='text', limit=limit * 2),
-                    Prefetch(query=sparse, using='text_sparse', limit=limit * 2),
-                ],
-                query=FusionQuery(fusion=Fusion.RRF),
-                limit=limit,
-                with_payload=True
-            )
-            for dense, sparse in zip(dense_batch, sparse_batch)
-        ]
-
-        return self.client.query_batch_points(
-            collection_name=config.DB_NAME,
-            requests=requests,
-        )
-    
 

@@ -45,11 +45,7 @@ class ModelService:
         return F.normalize(image_embeds, dim=-1).cpu().numpy()[0]
 
     def embed_text_sparse(self, queries, batch_size=32):
-        embeddings = list(tqdm(
-            self.sparse_model.embed(queries, batch_size=batch_size),
-            total=len(queries),
-            desc="Sparse embedding"
-        ))
+        embeddings = self.sparse_model.embed(queries, batch_size=batch_size)
         return [
             SparseVector(
                 indices=embeds.indices.tolist(),

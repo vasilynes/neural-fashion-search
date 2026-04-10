@@ -52,7 +52,7 @@ class ModelService:
         ))
         return [
             SparseVector(
-            indices=embeds.indices.tolist(),
-            values=embeds.values.tolist()
+                indices=embeds.indices.tolist(),
+                values=embeds.values.tolist()
             ) for embeds in embeddings
         ]

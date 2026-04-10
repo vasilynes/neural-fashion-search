@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from app.config import config
 from app.services.model import ModelService
 import os
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -87,6 +88,8 @@ async def lifespan(app: FastAPI):
     logger.info('Shutting down...')
 
 app = FastAPI(title='Multimodal Search Engine', lifespan=lifespan)
+
+Instrumentator().instrument(app).expose(app, endpoint='/metrics')
 
 @app.post('/search/image')
 async def search_by_image(

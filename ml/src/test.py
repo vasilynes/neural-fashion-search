@@ -80,8 +80,6 @@ def test_routine(test_loaders, test_params):
             
             filtered_sim = similarity(filtered_text_embeds, image_embeds)
             
-            # for t2i: each text query should retrieve its matching image
-            # but correct index in full image set is indices[i], not i
             checkpoint_results[loader_name] = {
                 't2i': recall_at_k_filtered(filtered_sim, indices)
             }

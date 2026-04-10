@@ -33,14 +33,18 @@ class Config:
 
     @property
     def DATA_DIR(self) -> Path:
+        return Path(os.getenv('DATA_DIR', self.BASE_DIR / 'data'))
+        
+    @property
+    def DATASET_DIR(self) -> Path:
         if self.IS_KAGGLE:
             return self.INPUT_DIR / DATASET
         else:
-            return Path(os.getenv('DATA_DIR', self.BASE_DIR / 'data'))
+            return self.DATA_DIR / 'dataset'
         
     @property
     def CHECKPOINT_DIR(self):
-        return self.BASE_DIR / 'checkpoints'
+        return self.BASE_DIR / 'results' / 'checkpoints'
     
     @property
     def LOG_DIR(self):
@@ -52,19 +56,19 @@ class Config:
     
     @property
     def MANIFEST_FILE(self) -> Path:
-        return self.DATA_DIR / 'articles.parquet'
+        return self.DATASET_DIR / 'articles.parquet'
     
     @property
     def TRAIN_FILE(self) -> Path:
-        return self.DATA_DIR / 'articles_train.parquet'
+        return self.DATASET_DIR / 'articles_train.parquet'
     
     @property
     def TEST_FILE(self) -> Path:
-        return self.DATA_DIR / 'articles_test.parquet'
+        return self.DATASET_DIR / 'articles_test.parquet'
     
     @property
     def VAL_FILE(self) -> Path:
-        return self.DATA_DIR / 'articles_val.parquet'
+        return self.DATASET_DIR / 'articles_val.parquet'
 
     CLIP_IMAGE_STATS: dict = field(default_factory=lambda: {
         'mean': (0.48145466, 0.4578275, 0.40821073),        # CLIP images stats

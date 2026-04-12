@@ -95,11 +95,13 @@ Instrumentator().instrument(app).expose(app, endpoint='/metrics')
 async def search_by_image(
     request: Request,  
     file: UploadFile = File(...),
+    query: str = Query(None), 
+    beta: float = Query(0.6),
     limit: int = Query(10)
 ):
     image = Image.open(io.BytesIO(await file.read())).convert('RGB')
     image = preprocess_image(image)
-    results = request.app.state.search_service.search_by_image(image)
+    results = request.app.state.search_service.search_by_image(image, query, beta, limit)
     return [
         {
             'article_id': r.payload['article_id'],

@@ -42,7 +42,7 @@ class ModelService:
             image_embeds = vision_outputs.pooler_output
             image_embeds = self.dense_model.base_model.model.visual_projection(image_embeds)  # Project pooled output into the common space
 
-        return F.normalize(image_embeds, dim=-1).cpu().numpy()[0]
+        return F.normalize(image_embeds, dim=-1).cpu().numpy()
 
     def embed_text_sparse(self, queries, batch_size=32):
         embeddings = self.sparse_model.embed(queries, batch_size=batch_size)
@@ -52,3 +52,25 @@ class ModelService:
                 values=embeds.values.tolist()
             ) for embeds in embeddings
         ]
+
+    def embed_multimodal(self, image, text, beta=0.6):
+        inputs = self.processor(
+            text=[text],
+            images=[image],
+            truncation=True,
+            padding=True,
+            return_tensors='pt',
+            max_length=77
+        ).to(self.device)
+
+        with torch.no_grad():
+            outputs = self.dense_model(**inputs)
+            image_embed = outputs.image_embeds
+            text_embed = outputs.text_embeds
+
+        image_embed = F.normalize(image_embed, dim=-1)
+        text_embed = F.normalize(text_embed, dim=-1)
+
+        query_embed = (beta * image_embed) + ((1.0 - beta) * text_embed)
+
+        return F.normalize(query_embed, dim=-1).cpu().numpy()

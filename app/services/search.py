@@ -34,8 +34,11 @@ class SearchService:
             requests=requests,
         )
     
-    def search_by_image(self, image, limit=10):
-        dense = self.model_service.embed_image(image)
+    def search_by_image(self, image, query, beta, limit=10):
+        if query:
+            dense = self.model_service.embed_multimodal(image, query, beta)[0]
+        else:
+            dense = self.model_service.embed_image(image)[0]
 
         return self.client.query_points(
             collection_name=config.DB_NAME,

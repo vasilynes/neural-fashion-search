@@ -4,6 +4,7 @@ export default function SearchBar({ onSearch }) {
     const [query, setQuery] = useState('')
     const [file, setFile] = useState(null)
     const [preview, setPreview] = useState(null)
+    const [beta, setBeta] = useState(0.2)
     const fileInputRef = useRef(null)
 
     function handleFileChange(e) {
@@ -28,7 +29,7 @@ export default function SearchBar({ onSearch }) {
     function handleSubmit(e) {
         e.preventDefault()
         if (file) {
-            onSearch({ file, query: query.trim() || undefined })
+            onSearch({ file, query: query.trim() || undefined, beta})
         } else if (query.trim()) {
             onSearch({ query })
         }
@@ -46,6 +47,20 @@ export default function SearchBar({ onSearch }) {
                         >
                             ×
                         </button>
+                    </div>
+                )}
+                {file && (
+                    <div className="flex items-center gap-3 w-fit">
+                        <span className="text-xs text-zinc-400 whitespace-nowrap">beta: {beta.toFixed(1)}</span>
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={beta}
+                            onChange={e => setBeta(parseFloat(e.target.value))}
+                            className="w-24 slider-thin"
+                        />
                     </div>
                 )}
                 <div className="flex gap-2">

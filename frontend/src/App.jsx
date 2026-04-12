@@ -8,14 +8,14 @@ export default function App() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    async function handleSearch({ query, file }) {
+    async function handleSearch({ query, file, beta}) {
         setLoading(true)
         setError(null)
         setResults(null)
 
         try {
             const data = file
-                ? await searchByImage(file, query || undefined)
+                ? await searchByImage(file, query || undefined, beta)
                 : await searchByText(query) 
             setResults(data)
         } catch (err) {

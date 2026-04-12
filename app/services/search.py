@@ -66,20 +66,18 @@ class SearchService:
             d_scores = [p.score for p in dense_res.points]
             s_scores = [p.score for p in sparse_res.points]
 
-            d_min, d_max = (min(d_scores), max(d_scores)) if d_scores else (0, 1)
-            s_min, s_max = (min(s_scores), max(s_scores)) if s_scores else (0, 1)
-            d_range = (d_max - d_min) or 1.0
-            s_range = (s_max - s_min) or 1.0
+            d_max = max(d_scores) if d_scores else 1.0
+            s_max = max(s_scores) if s_scores else 1.0
 
             combined_scores = {}
             unique_points = {}
             for point in dense_res.points:
-                norm_score = (point.score - d_min) / d_range
+                norm_score = point.score / d_max
                 combined_scores[point.id] = alpha * norm_score
                 unique_points[point.id] = point
             
             for point in sparse_res.points:
-                norm_score = (point.score - s_min) / s_range
+                norm_score = point.score / s_max
                 if point.id in combined_scores:
                     combined_scores[point.id] += (1 - alpha) * norm_score
                 else:
@@ -95,4 +93,3 @@ class SearchService:
             all_results.append(sorted_points)
         
         return all_results
-

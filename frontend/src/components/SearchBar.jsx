@@ -51,7 +51,7 @@ export default function SearchBar({ onSearch }) {
                 )}
                 {file && (
                     <div className="flex items-center gap-3 w-fit">
-                        <span className="text-xs text-zinc-400 whitespace-nowrap">beta: {beta.toFixed(1)}</span>
+                        <span className="text-xs text-zinc-400 whitespace-nowrap">Image weight: {beta.toFixed(1)}</span>
                         <input
                             type="range"
                             min="0"

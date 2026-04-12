@@ -38,7 +38,7 @@ export default function App() {
                         Fashion Search
                     </h1>
                     <p className="text-zinc-400 text-sm">
-                        Search by text, image or hybrid
+                        Search by text, image or multimodally
                     </p>
                 </div>
 

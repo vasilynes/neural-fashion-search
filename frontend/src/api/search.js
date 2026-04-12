@@ -8,11 +8,16 @@ export async function searchByText(query, limit = 10) {
     return response.data
 }
 
-export async function searchByImage(file, limit = 10) {
+export async function searchByImage(file, query, limit = 10) {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await axios.post(`/search/image?limit=${limit}`, formData, {
+    const params = new URLSearchParams({ limit })
+    if (query) {
+        params.append('query', query)
+    }
+
+    const response = await axios.post(`/search/image?${params}}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }

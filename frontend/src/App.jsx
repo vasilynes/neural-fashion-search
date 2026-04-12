@@ -8,15 +8,15 @@ export default function App() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    async function handleSearch({ mode, query, file }) {
+    async function handleSearch({ query, file }) {
         setLoading(true)
         setError(null)
         setResults(null)
 
         try {
-            const data = mode === 'text'
-                ? await searchByText(query)
-                : await searchByImage(file)
+            const data = file
+                ? await searchByImage(file, query || undefined)
+                : await searchByText(query) 
             setResults(data)
         } catch (err) {
             const detail = err.response?.data?.detail
@@ -38,7 +38,7 @@ export default function App() {
                         Fashion Search
                     </h1>
                     <p className="text-zinc-400 text-sm">
-                        Search by text description or upload an image
+                        Search by text, image or hybrid
                     </p>
                 </div>
 

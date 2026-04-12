@@ -1,100 +1,90 @@
 import { useState, useRef } from 'react'
-import Toggle from './Toggle'
 
 export default function SearchBar({ onSearch }) {
-    const [mode, setMode] = useState('text')
     const [query, setQuery] = useState('')
     const [file, setFile] = useState(null)
     const [preview, setPreview] = useState(null)
     const fileInputRef = useRef(null)
 
-    function handleModeChange(newMode) {
-        setMode(newMode)
-        setQuery('')
-        setFile(null)
-        setPreview(null)
-    }
-
     function handleFileChange(e) {
         const selected = e.target.files[0]
         if (!selected) return
-
         if (preview) {
             URL.revokeObjectURL(preview)
         }
-
         setFile(selected)
         setPreview(URL.createObjectURL(selected))
     }
 
-    function handleSubmit(e) {
-        e.preventDefault()
-        if (mode === 'text' && query.trim()) {
-            onSearch({ mode, query })
-        } else if (mode === 'image' && file) {
-            onSearch({ mode, file })
+    function handleRemoveImage() {
+        if (preview) {
+            URL.revokeObjectURL(preview)
         }
+        setFile(null)
+        setPreview(null)
+        fileInputRef.current.value = ''
     }
 
+    function handleSubmit(e) {
+        e.preventDefault()
+        if (file) {
+            onSearch({ file, query: query.trim() || undefined })
+        } else if (query.trim()) {
+            onSearch({ query })
+        }
+    }
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <Toggle mode={mode} onChange={handleModeChange} />
-                </div>
-
-                {mode === 'text' ? (
-                    <div className="flex gap-2">
+            <div className="flex flex-col gap-3">
+                {preview && (
+                    <div className="relative w-16 h-16">
+                        <img src={preview} alt="preview" className="w-full h-full object-cover rounded-lg border border-zinc-200" />
+                        <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="absolute -top-1 -right-1 bg-zinc-800 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center hover:bg-zinc-600"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+                <div className="flex gap-2">
+                    <div className="relative flex-1 flex items-center">
                         <input
                             type="text"
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            placeholder="Search for fashion items..."
-                            className="flex-1 px-4 py-3 rounded-xl border border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm"
+                            placeholder={file ? "Optional: describe specifications..." : "Search for fashion products..."}
+                            className="w-full pl-4 pr-12 py-3 rounded-xl border border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm"
                         />
                         <button
-                            type="submit"
-                            disabled={!query.trim()}
-                            className="px-6 py-3 bg-zinc-900 text-white rounded-xl text-sm font-medium hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Search
-                        </button>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-3">
-                        <div
+                            type="button"
                             onClick={() => fileInputRef.current.click()}
-                            className="w-full h-40 border-2 border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-zinc-400 transition-colors"
+                            className="absolute right-3 text-zinc-400 hover:text-zinc-700 transition-colors"
+                            title="Search by image"
                         >
-                            {preview ? (
-                                <img
-                                    src={preview}
-                                    alt="preview"
-                                    className="h-full w-full object-contain rounded-xl"
-                                />
-                            ) : (
-                                <div className="text-center">
-                                    <p className="text-zinc-400 text-sm">Click to upload an image</p>
-                                    <p className="text-zinc-300 text-xs mt-1">PNG, JPG supported</p>
-                                </div>
-                            )}
-                        </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="hidden"
-                        />
-                        <button
-                            type="submit"
-                            disabled={!file}
-                            className="px-6 py-3 bg-zinc-900 text-white rounded-xl text-sm font-medium hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Search
+                            {/* Camera icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
                         </button>
                     </div>
-                )}
+                    <button
+                        type="submit"
+                        disabled={!query.trim() && !file}
+                        className="px-6 py-3 bg-zinc-900 text-white rounded-xl text-sm font-medium hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Search
+                    </button>
+                </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
             </div>
         </form>
     )

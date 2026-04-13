@@ -7,12 +7,15 @@ class SearchService:
         self.client = client
         self.model_service = model_service
 
-    def search_by_text(self, query: str, limit=10):
-        return self.search_by_text_batch([query], limit=limit)[0].points
+    def search_by_text(self, query: str, alpha: float, fusion:str, limit=10):
+        result = self.search_by_text_batch([query], alpha, fusion, limit=limit)[0]  
+        return result.points if hasattr(result, 'points') else result   # Current workaround to handle different return types
 
-    def search_by_text_batch(self, queries: list[str], limit=10):
+    def search_by_text_batch(self, queries: list[str], alpha:float, fusion:str, limit=10):
         dense_batch = self.model_service.embed_text(queries)
         sparse_batch = self.model_service.embed_text_sparse(queries)
+        if fusion == 'weighted':
+            return self.search_by_embeddings_alpha(dense_batch, sparse_batch, alpha, limit)
         return self.search_by_embeddings(dense_batch, sparse_batch, limit)
     
     def search_by_embeddings(self, dense_batch: list, sparse_batch: list, limit=10):
@@ -33,19 +36,6 @@ class SearchService:
             collection_name=config.DB_NAME,
             requests=requests,
         )
-    
-    def search_by_image(self, image, query, beta, limit=10):
-        if query:
-            dense = self.model_service.embed_multimodal(image, query, beta)[0]
-        else:
-            dense = self.model_service.embed_image(image)[0]
-
-        return self.client.query_points(
-            collection_name=config.DB_NAME,
-            query=dense,
-            using='image',
-            limit=limit
-        ).points
     
     def search_by_embeddings_alpha(self, dense_batch: list, sparse_batch: list, alpha=0.5, limit=10):
         dense_results = self.client.query_batch_points(
@@ -96,3 +86,17 @@ class SearchService:
             all_results.append(sorted_points)
         
         return all_results
+    
+    def search_by_image(self, image, query, beta, limit=10):
+        if query:
+            dense = self.model_service.embed_multimodal(image, query, beta)[0]
+        else:
+            dense = self.model_service.embed_image(image)[0]
+
+        return self.client.query_points(
+            collection_name=config.DB_NAME,
+            query=dense,
+            using='image',
+            limit=limit
+        ).points
+    

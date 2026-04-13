@@ -1,10 +1,14 @@
 import { useState, useRef } from 'react'
+import Toggle from './Toggle'
+import WeightSlider from './WeightSlider'
 
 export default function SearchBar({ onSearch }) {
     const [query, setQuery] = useState('')
     const [file, setFile] = useState(null)
     const [preview, setPreview] = useState(null)
+    const [alpha, setAlpha] = useState(0.25)
     const [beta, setBeta] = useState(0.2)
+    const [fusion, setFusion] = useState('rrf')
     const fileInputRef = useRef(null)
 
     function handleFileChange(e) {
@@ -29,9 +33,9 @@ export default function SearchBar({ onSearch }) {
     function handleSubmit(e) {
         e.preventDefault()
         if (file) {
-            onSearch({ file, query: query.trim() || undefined, beta})
+            onSearch({ query: query.trim() || undefined, file, alpha, beta, fusion})
         } else if (query.trim()) {
-            onSearch({ query })
+            onSearch({ query, fusion, alpha })
         }
     }
     return (
@@ -47,20 +51,6 @@ export default function SearchBar({ onSearch }) {
                         >
                             ×
                         </button>
-                    </div>
-                )}
-                {file && (
-                    <div className="flex items-center gap-3 w-fit">
-                        <span className="text-xs text-zinc-400 whitespace-nowrap">Image weight: {beta.toFixed(1)}</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={beta}
-                            onChange={e => setBeta(parseFloat(e.target.value))}
-                            className="w-24 slider-thin"
-                        />
                     </div>
                 )}
                 <div className="flex gap-2">
@@ -92,7 +82,18 @@ export default function SearchBar({ onSearch }) {
                     >
                         Search
                     </button>
+                    <Toggle fusion={fusion} onChange={setFusion} />
                 </div>
+                {(file || fusion === 'weighted') && (
+                    <div className="flex items-center gap-4 w-fit">
+                        {file && (
+                            <WeightSlider label="Image weight" value={beta} onChange={setBeta} />
+                        )}
+                        {fusion === 'weighted' && (
+                            <WeightSlider label="Semantic weight" value={alpha} onChange={setAlpha} step={0.05} />
+                        )}
+                    </div>
+                )}
                 <input
                     ref={fileInputRef}
                     type="file"

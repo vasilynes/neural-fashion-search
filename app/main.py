@@ -96,7 +96,9 @@ async def search_by_image(
     request: Request,  
     file: UploadFile = File(...),
     query: str = Query(None), 
+    alpha: float = Query(0.25),
     beta: float = Query(0.6),
+    fusion: str = Query('rrf'),
     limit: int = Query(10)
 ):
     image = Image.open(io.BytesIO(await file.read())).convert('RGB')
@@ -115,11 +117,13 @@ async def search_by_image(
 
 class TextQuery(BaseModel):
     query: str
+    alpha: float
+    fusion: str
     limit: int = 10
 
 @app.post('/search/text')
 async def search_by_text(request: Request, body: TextQuery):
-    results = request.app.state.search_service.search_by_text(body.query, body.limit)
+    results = request.app.state.search_service.search_by_text(body.query, body.alpha, body.fusion, body.limit)
     return [
         {
             'article_id': r.payload['article_id'],

@@ -1,6 +1,5 @@
 data
 venv
-notebooks
 kaggle_training.ipynb
 logs
 checkpoints

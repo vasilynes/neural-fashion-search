@@ -75,7 +75,7 @@ The strictest R@1 improved by 44-46%.
 
 R@10 for both directions of inference is ~0.80, meaning 20% of queries failed to find the correct term within top 10 objects.
 ### Ablation, HitRate@10 and Mean Reciprocal Rank
-The search engine is based on combining dense and sparse embeddings. To evaluate it fully, LLM was used on 10 000 unique descriptions to generate synthetic user queries of the following types:
+The search engine is based on combining dense and sparse embeddings. To evaluate it fully, LLM (Qwen2.5-3B-Instruct) was used on 10 000 unique descriptions to generate synthetic user queries of the following types:
 
 1. Synonyms, where the modifiers are altered to their synonyms
 2. Typos, where the descriptions are polluted
@@ -105,7 +105,7 @@ The metrics are then recomputed using RRF, which formally corresponds to alpha =
 Except Synonyms, other types are slightly worse off from RRF and are better off from setting `alpha=.25` or near it, leading to asymmetric hybrid search, where lexical expansion does the heavy lifting. 
 
 However, since the data is fully synthetic, the study doesn't demonstrate the full distribution dynamics, so that further explorations are needed.
-### Failure analysis
+### Text failure analysis
 Here top 10 returned products are investigated.
 #### Hubness
 Bra type is one of the top-20 product types. Searching "bra" using RRF returned only 5 bras, failures are:
@@ -133,4 +133,75 @@ In turn, the search engine in the RRF mode sometimes puts so much weight on the 
 
 #### Weak clustering
 Another interesting failure is regarding weak clustering. Small categories are expected to cluster at the top, instead the model puts high probability on some incorrect types, leading to correct objects being mingled with incorrect types. One such an example is "tote bag", where a small bag receives 0.50 and some tote bag gets 0.25 probability.
+#### Augmentation, Precision@10
+LLM (Qwen2.5-3B-Instruct) is used to extract query chains from descriptions of the items in the dataset. 
 
+The chains are of the following form:
+$$L0 \rightarrow L1 \rightarrow L2 \rightarrow L3 \rightarrow L4 \rightarrow L5$$, 
+where L0-queries are the most basic attribute with a product type (typically 2-3 words) and L5 are comprehensive queries capturing all key features.
+
+An example: <br>
+`cotton dress` <br>
+`cotton dress with sleeves` <br>
+`cotton dress with long sleeves` <br>
+`cotton dress with long sleeves and V-neck` <br>
+`cotton dress with long sleeves and V-neck in floral` <br>
+`cotton dress with long sleeves and V-neck in floral print`
+
+LLM-as-a-judge (Qwen2.5-3B-Instruct) approach is used to classify each returned item as either relevant (1) to the query or irrelevant (0). Then Precision@10 is calculated.
+
+<img width="1016" height="630" alt="Screenshot_20260519_055258" src="https://github.com/user-attachments/assets/783070de-7a73-45e4-ab9f-4e629b1d8b08" />
+
+The search in the RRF mode is stable under query augmentation, the fluctuations in the $0.5\%$ interval can be attributed to noise. 
+
+Some mismatches:
+
+**Query 1**</br>
+`microfibre hipster briefs with a high waist`</br>
+**Returned description**</br>
+`Microfibre hipster briefs with a low waist, lined gusset, wide sides and cutaway coverage at the back.`</br>
+The query specifies "high waist" and the product is "low waist".
+
+**Query 2**</br>
+`woven dress`</br>
+**Returned description**</br>
+`Long-sleeved dress in a short, fitted style.`</br>
+The dress is not specified to be woven.
+
+**Query 3**</br>
+`lace briefs with low waist and lined gusset`</br>
+**Returned description**</br>
+`Studio Collection. Briefs in patterned mesh with neat lace trims. Low waist, a lined gusset and cutaway coverage at the back. Studio Collection AW20...`</br>
+The query asks for fully lace briefs and the search returns briefs with lace trims only.
+
+**Query 4**</br>
+`organic cotton t-shirt`</br>
+**Returned description**</br>
+`Long-sleeved top in organic cotton jersey with a ribbed neckline in a contrasting colour and a gently rounded hem.`</br>
+Product mismatch, potentially due to visual ambiguity of t-shirt versus top types.
+
+**Query 4**</br>
+`soft sweatshirt fabric top with frills at the front, long sleeves, raglan shoulders, and ribbing around the neckline`</br>
+**Returned description**</br>
+`Top in soft sweatshirt fabric made from a cotton blend with a round neckline and long raglan sleeves. Ribbing around the neckline, cuffs and hem. Soft brushed inside.`</br>
+The query itself is very specific, but it failed to retrieve the correct product: the frills at the front are not present in the description.
+
+Failures under augmentation can be explained in the following ways:
+1. The probability of word mismatch grows with query length, overspecified queries allow for more mismatches;
+2. Dense search has too much signal, e.g., specifying sizes fails because they are indistinguishable in a picture;
+3. The LLM which generated queries could hallucinate more on longer queries;
+4. There are simply not enough products for an overspecified query, that is, as $n \rightarrow \infty$, the number of relevant products approaches 1 and the LLM is too strict and discards "best possible" matches, that the search suggests;
+5. The description itself is incomplete, while search may retrieve items by visual recognition too.
+
+The fourth explanation means that the metric P@10 itself punishes longer queries. Nevertheless, this demonstrates, that at least 6 out of 10 retrieved products are good enough on average, according to the LLM, and this "goodness" is stable across long enough queries. 
+### Image failure analysis
+Random samples of images were not found to fail, the engine excels even at hard images. It easily finds close-ups of objects, repeating the patterns and types of the cloth and material; it finds images with items presented in a collection, e.g., a series of socks, T-shirts or whole garments sets. 
+It didn't fail on objects from different categories of various colors randomly sampled from the dataset. 
+
+Since bras and dresses were identified to be problematic categories in text search, 20 bras (10 black and 10 colored) and 10 dresses were sampled and searched by their images, the returned results were fully correct. 
+
+Then precisely the objects from the bra and bikini queries were taken and searched by their images, each image retrieved exactly.
+
+The searched-with image is trivially the top-1 object returned with probabability around 1.0, the others all have probabilities around 0.8 to 0.9. This is unlike to textual queries, where the first returned object has probability around 0.5 and subsequent ones have even less.
+
+These observations can be naturally explained by information completeness, since an image has roughly 100% SNR. More deeply, images, unlike text, already form a smooth manifold, so they are naturally isolated from each other. This gives theoretical guarantees to searching in the image mode.

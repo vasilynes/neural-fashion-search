@@ -9,3 +9,4 @@ embeddings
 frontend/node_modules
 __pycache__/
 fashion_database-4540778058153887-2026-03-25-19-14-45.snapshot 
+.ipynb_checkpoints

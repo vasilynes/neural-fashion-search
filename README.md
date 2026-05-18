@@ -125,7 +125,7 @@ In fact, searching by all product types, it's possible to identify the items, th
 
 <img width="1277" height="233" alt="Screenshot_20260519_051903" src="https://github.com/user-attachments/assets/6d8aa8f2-f8cf-43c5-a252-22728c9c2cac" />
 
-This hints at the problem with the dense model. The single-word representation is too fragile, the single-query signal is too weak and fails to point at the correct query-neighborhood. 
+This hints at the problem with the dense model. The single-word representation is too fragile, the single-query signal is too weak and fails to point at the correct item-neighborhood. 
 
 Instead, the vector points at some generic destination (a hub) which is close to the centroid, since the conditional expectation $\mathbb{E}[X \mid \mathsf{query}]$ is calculated over many items, if the query is general enough (e.g., "black"). This can be understood as a particular case of the curse of dimensionality, namely, the Hubness problem, as shown in [Radovanović et al. (2010)](https://www.jmlr.org/papers/v11/radovanovic10a.html).
 

@@ -127,7 +127,7 @@ In fact, searching by all product types, it's possible to identify the items, th
 
 This hints at the problem with the dense model. The single-word representation is too fragile, the single-query signal is too weak and fails to point at the correct query-neighborhood. 
 
-Instead, the vector points at some generic destination (a hub) which is close to the centroid, since the conditional expectation $\mathbb{E}[X \mid \mathsf{query}]$ is calculated over many items, if the query is general enough (e.g., "black"). Formally, it's known as the Hubness problem, see [Radovanović et al. (2010)](https://www.jmlr.org/papers/v11/radovanovic10a.html).
+Instead, the vector points at some generic destination (a hub) which is close to the centroid, since the conditional expectation $\mathbb{E}[X \mid \mathsf{query}]$ is calculated over many items, if the query is general enough (e.g., "black"). This can be understood as a particular case of the curse of dimensionality, namely, the Hubness problem, as shown in [Radovanović et al. (2010)](https://www.jmlr.org/papers/v11/radovanovic10a.html).
 
 In turn, the search engine in the RRF mode sometimes puts so much weight on the dense vector component, that a strong dense similarity can override a zero SPLADE score, resulting in the observed pollutions.
 

@@ -4,6 +4,11 @@ This project adapts the [FashionCLIP model](https://huggingface.co/patrickjohncy
 The API of the adapted model is exposed via the search interface frontend, the user can search items by text, images or combined.
 This creates a domain-adapted, multimodal search architecture.
 
+### TL;DR
+* Domain adaptation works: fine-tuning FashionCLIP on the H&M dataset improved strict recall (R@1) by 45%.
+* Modality gap: pure dense search suffers from weak signal on short user queries (hubness). It requires a sparse retriever (SPLADE) to handle exact keyword matching and typos.
+* Optimality: An asymmetric hybrid search (`alpha=.25` dense weight) maximizes performance for real-world e-commerce according to the tests.
+
 ### Architecture
 1. ML Models:
    * Dense: the FashionCLIP model (ViT-B/32), adapted through rank-8 LoRA in 4 vision layers and 6 text layers and contrastive loss for semantic text-image bridging
@@ -32,7 +37,7 @@ For details on data cleaning & analysis, see:
 * `ml/notebooks/02_text_analysis.ipynb`
 * `ml/notebooks/03_categorical_analysis.ipynb`
 ### Domain Adaptation
-Adapted FashionCLIP demonstrates increase in its recall (i2t = imate-to-text, t2i = text-to-image):
+Adapted FashionCLIP demonstrates increase in its recall (i2t = image-to-text, t2i = text-to-image):
 <table>
   <tr>
     <th></th>
@@ -86,11 +91,11 @@ The first two measure search resilience.
 
 The third measures how well the search tolerates the distribution shift from full descriptions to short user queries with specific vocabulary.
 
-The forth tests how well the search distinguishes between modifiers.
+The fourth tests how well the search distinguishes between modifiers.
 
 HR@10 is a portion of queries that resulted in retrieving at least one item from the set of objects that are described by the string, from which the query was derived. MRR measures the average reciprocal index of the first occurrence of such an object.
 
-For attribute swaps, HR@10 logic is reversed: the hit is 1 only if the items are not in the set of objects that are described by the string, so this is effectively the failure rate, not the hit rate, but since all these metrics can be regarded as a certain measure of success of a query, they are formally grouped to HR@10.
+For attribute swaps, the HR@10 logic is inverted: a "hit" is scored only if the engine successfully avoids retrieving the original item. Therefore, a higher HR@10 indicates the model successfully respected the swapped modifier.
 
 Both metrics are computed using weighted average fusion with `alphas = [.0, .25, .5, .75, 1]`, where `alpha` is the weight put on the dense component, and Max-Scaling normalization. For more details, see `ml/notebooks/scripts/metrics_by_alpha.py` script.
 
@@ -127,7 +132,7 @@ In fact, searching by all product types, it's possible to identify the items, th
 
 This hints at the problem with the dense model. The single-word representation is too fragile, the single-query signal is too weak and fails to point at the correct item-neighborhood. 
 
-Instead, the vector points at some generic destination (a hub) which is close to the centroid, since the conditional expectation $\mathbb{E}[X \mid \mathsf{query}]$ is calculated over many items, if the query is general enough (e.g., "black"). This can be understood as a particular case of the curse of dimensionality, namely, the Hubness problem, as shown in [Radovanović et al. (2010)](https://www.jmlr.org/papers/v11/radovanovic10a.html).
+Instead, the vector points at some generic destination (a hub) which is close to the centroid, since the conditional expectation \mathbb{E}[X \mid \mathsf{query}] is calculated over many items, if the query is general enough (e.g., "black"). This can be understood as a particular case of the curse of dimensionality, namely, the Hubness problem, as shown in [Radovanović et al. (2010)](https://www.jmlr.org/papers/v11/radovanovic10a.html).
 
 In turn, the search engine in the RRF mode sometimes puts so much weight on the dense vector component, that a strong dense similarity can override a zero SPLADE score, resulting in the observed pollutions.
 
@@ -192,7 +197,7 @@ Failures under augmentation can be explained in the following ways:
 1. The probability of word mismatch grows with query length, overspecified queries allow for more mismatches;
 2. Dense search has too much signal, e.g., specifying sizes fails because they are indistinguishable in a picture;
 3. The LLM which generated queries could hallucinate more on longer queries;
-4. There are simply not enough products for an overspecified query, that is, as $n \rightarrow \infty$, the number of relevant products approaches 1 and the LLM is too strict and discards "best possible" matches, that the search suggests;
+4. There are simply not enough products for an overspecified query, that is, as $query length \rightarrow \infty$, the number of relevant products approaches 1 and the LLM is too strict and discards "best possible" matches, that the search suggests;
 5. The description itself is incomplete, while search may retrieve items by visual recognition too.
 
 The fourth explanation means that the metric P@10 itself punishes longer queries. Nevertheless, this demonstrates, that at least 6 out of 10 retrieved products are good enough on average, according to the LLM, and this "goodness" is stable across long enough queries. 

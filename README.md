@@ -28,9 +28,9 @@ Then latent space arithmetics is then used to put an adjustable weight (default:
 The resulting query is used to search the database, that is, the multimodal search is always dense, SPLADE model is not used.
 ### Exploratory Data Analysis
 For details on data cleaning & analysis, see:
-* `ml/notebooks/01_dataset_cleaning`
-* `ml/notebooks/02_text_analysis`
-* `ml/notebooks/03_categorical_analysis`
+* `ml/notebooks/01_dataset_cleaning.ipynb`
+* `ml/notebooks/02_text_analysis.ipynb`
+* `ml/notebooks/03_categorical_analysis.ipynb`
 ### Domain Adaptation
 Adapted FashionCLIP demonstrates increase in its recall (i2t = imate-to-text, t2i = text-to-image):
 <table>
@@ -149,6 +149,8 @@ An example: <br>
 `cotton dress with long sleeves and V-neck in floral print`
 
 LLM-as-a-judge (Qwen2.5-3B-Instruct) approach is used to classify each returned item as either relevant (1) to the query or irrelevant (0). Then Precision@10 is calculated.
+
+For more details on propmts for augmentation and evaluation, see `ml/notebooks/search_engine/query.py`.
 
 <img width="1016" height="630" alt="Screenshot_20260519_055258" src="https://github.com/user-attachments/assets/783070de-7a73-45e4-ab9f-4e629b1d8b08" />
 

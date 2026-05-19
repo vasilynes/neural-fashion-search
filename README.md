@@ -7,7 +7,7 @@ This creates a domain-adapted, multimodal search architecture.
 ### TL;DR
 * Domain adaptation works: fine-tuning FashionCLIP on the H&M dataset improved strict recall (R@1) by 45%.
 * Modality gap: pure dense search suffers from weak signal on short user queries (hubness). It requires a sparse retriever (SPLADE) to handle exact keyword matching and typos.
-* Optimality: An asymmetric hybrid search (some `alpha` weight on dense search) maximizes performance for real-world e-commerce according to the analysis and tests.
+* Optimality: An asymmetric hybrid search (some `alpha` weight on dense search) maximizes performance for real-world e-commerce, according to the analysis and tests.
 
 ### Demonstrations
 #### Modifiers

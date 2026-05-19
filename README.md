@@ -9,6 +9,8 @@ This creates a domain-adapted, multimodal search architecture.
 * Modality gap: pure dense search suffers from weak signal on short user queries (hubness). It requires a sparse retriever (SPLADE) to handle exact keyword matching and typos.
 * Optimality: An asymmetric hybrid search (`alpha=.25` dense weight) maximizes performance for real-world e-commerce according to the tests.
 
+### Demonstrations
+
 ### Architecture
 1. ML Models:
    * Dense: the FashionCLIP model (ViT-B/32), adapted through rank-8 LoRA in 4 vision layers and 6 text layers and contrastive loss for semantic text-image bridging

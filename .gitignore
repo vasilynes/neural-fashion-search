@@ -2,9 +2,8 @@ data
 venv
 kaggle_training.ipynb
 logs
-checkpoints
 model_testing.ipynb
-results
+metrics
 embeddings
 frontend/node_modules
 __pycache__/

@@ -39,7 +39,7 @@ In turn, modifying leather boots with "floral" allows the search to retrieve lea
    * Dense: the FashionCLIP model (ViT-B/32), adapted through rank-8 LoRA in 4 vision layers and 6 text layers and contrastive loss for semantic text-image bridging
    * Sparse: the SPLADE model for exact text matching and vocabulary expansion
 2. Database: Qdrant for parallel dense/sparse indexing and native Reciprocal Rank Fusion (RRF)
-3. Backend: FastAPI
+3. Backend: FastAPI + Prometheus
 4. Frontend: React + TailwindCSS
 
 The Qdrant database is utilized to store embeddings: dense text/image embeddings of the adapted FashionCLIP model encoders and sparse text embeddings of the SPLADE model. 

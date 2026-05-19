@@ -90,7 +90,7 @@ export default function SearchBar({ onSearch }) {
                             <WeightSlider label="Image weight" value={beta} onChange={setBeta} />
                         )}
                         {fusion === 'weighted' && (
-                            <WeightSlider label="Semantic weight" value={alpha} onChange={setAlpha} step={0.05} />
+                            <WeightSlider label="Dense weight" value={alpha} onChange={setAlpha} step={0.05} />
                         )}
                     </div>
                 )}

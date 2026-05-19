@@ -10,6 +10,29 @@ This creates a domain-adapted, multimodal search architecture.
 * Optimality: An asymmetric hybrid search (`alpha=.25` dense weight) maximizes performance for real-world e-commerce according to the tests.
 
 ### Demonstrations
+#### Modifiers
+##### Strictness
+<img width="1000" height="563" alt="crew_neck_shirt" src="https://github.com/user-attachments/assets/048c761f-c6ec-493f-967d-bd43e1963847" />
+
+Dense search is sensitive to modifiers. When using SPLADE with weight 0.75 (`alpha=.25`), "crew-neck shirt" query returns some v-neck shirts. Putting more weight on dense search resolves this and the hybrid search returns crew-neck shirts only.
+
+##### Vocabulary gap
+<img width="1000" height="563" alt="goth_outfit" src="https://github.com/user-attachments/assets/4179fda0-8151-4f68-81b8-76e58757c537" />
+
+Abstract user queries may hurt sparse search, since those exact words may not exist in the H&M catalog. Searching "goth outfit" returns generic outfits, while putting more weight on dense search allows to map abstract human concepts ("goth") to visual reality.
+
+<img width="1000" height="563" alt="winter_dress" src="https://github.com/user-attachments/assets/629b0bda-f81b-4a2e-824c-c12fc61f0c13" />
+
+SPLADE fails to suggest dresses appropriate for the winter, but search results with a higher weight on the dense component contain knitted dresses.
+
+#### Multimodality
+<img width="1000" height="563" alt="black_leather_floral_dress" src="https://github.com/user-attachments/assets/30d72889-5f58-4271-8091-4adc2480457f" />
+
+The floral dress continuously modified by the "black leather" specification. Image concept arithmetic allows to evaluate complex queries by fusing image and text vectors in the latent space `(β * Image + (1-β) * Text)`. Users can visually search for items while applying text modifiers.
+
+<img width="1000" height="563" alt="floral_leather_boots" src="https://github.com/user-attachments/assets/6c08c2e9-b7bb-42d9-a5e0-e03150e3494c" />
+
+In turn, modifying leather boots with the "floral" text allows to retrieve leather boots with floral pattern on them. 
 
 ### Architecture
 1. ML Models:

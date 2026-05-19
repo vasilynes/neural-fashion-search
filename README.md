@@ -1,5 +1,5 @@
 ## Neural Fashion Search Engine
-This project adapts the [FashionCLIP model](https://huggingface.co/patrickjohncyh/fashion-clip) to the [H&M Personalized Fashion Recommendations dataset](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data?select=images) (100+ SKUs).
+This project adapts the [FashionCLIP model](https://huggingface.co/patrickjohncyh/fashion-clip) to the [H&M Personalized Fashion Recommendations dataset](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data?select=images) (100k+ SKUs).
 
 The API of the adapted model is exposed via the search interface frontend, the user can search items by text, images or combined.
 This creates a domain-adapted, multimodal search architecture.

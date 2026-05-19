@@ -9,6 +9,37 @@ This creates a domain-adapted, multimodal search architecture.
 * Modality gap: pure dense search suffers from weak signal on short user queries (hubness). It requires a sparse retriever (SPLADE) to handle exact keyword matching and typos.
 * Optimality: An asymmetric hybrid search (some `alpha` weight on dense search) maximizes performance for real-world e-commerce, according to the analysis and tests.
 
+### Local run
+The stack is dockerized.
+
+1. Clone the repo:
+   ```
+     git clone https://github.com/vasilynes/neural-fashion-search/
+     cd neural-fashion-search
+   ```
+2. Obtain the H&M dataset (contains `articles.csv` and `images` archive).
+3. Run `ml/notebooks/01_dataset_cleaning.ipynb` on `articles.csv`, the resulting parquet file must be saved to `ml/data/dataset/`.
+4. Extract contents of the `images` archive to `ml/data/images/`.
+The resulting structure must be the following:
+`
+ml/
+├── data/
+│   ├── dataset/
+│   │   └── articles.parquet
+│   └── images/             
+└── results/                  cloned from the repo
+`
+5. Build and run the services:
+   ```
+     docker compose up -d --build
+   ```
+6. Embed and index the dataset (only on the build or update):
+   ```
+     docker compose --profile setup run --rm setup
+   ```
+   
+API will be exposed at `8000`, frontend will be exposed at `5173`, qdrant will be exposed at `6333`.
+
 ### Demonstrations
 #### Modifiers
 ##### Strictness
@@ -41,6 +72,7 @@ In turn, modifying leather boots with "floral" allows the search to retrieve lea
 2. Database: Qdrant for parallel dense/sparse indexing and native Reciprocal Rank Fusion (RRF)
 3. Backend: FastAPI + Prometheus
 4. Frontend: React + TailwindCSS
+5. Deploy: Docker + Docker Compose
 
 The Qdrant database is utilized to store embeddings: dense text/image embeddings of the adapted FashionCLIP model encoders and sparse text embeddings of the SPLADE model. 
 The items are then retrieved via ANN search. 

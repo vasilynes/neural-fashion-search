@@ -19,7 +19,7 @@ Dense search is sensitive to modifiers. When using SPLADE with weight 0.75 (`alp
 ##### Vocabulary gap
 <img width="1000" height="563" alt="goth_outfit" src="https://github.com/user-attachments/assets/4179fda0-8151-4f68-81b8-76e58757c537" />
 
-Abstract user queries may hurt sparse search, since those exact words may not exist in the H&M catalog. Searching "goth outfit" returns generic outfits, while putting more weight on dense search allows to map abstract human concepts ("goth") to visual reality.
+Abstract user queries may hurt sparse search, since those exact words may not exist in the H&M catalog. Searching "goth outfit" returns generic outfits, while putting more weight on dense search allows the system to map abstract human concepts ("goth") to visual reality.
 
 <img width="1000" height="563" alt="winter_dress" src="https://github.com/user-attachments/assets/629b0bda-f81b-4a2e-824c-c12fc61f0c13" />
 
@@ -28,11 +28,11 @@ SPLADE fails to suggest dresses appropriate for the winter, but search results w
 #### Multimodality
 <img width="1000" height="563" alt="black_leather_floral_dress" src="https://github.com/user-attachments/assets/30d72889-5f58-4271-8091-4adc2480457f" />
 
-The floral dress continuously modified by the "black leather" specification. Image concept arithmetic allows to evaluate complex queries by fusing image and text vectors in the latent space `(β * Image + (1-β) * Text)`. Users can visually search for items while applying text modifiers.
+The floral dress continuously modified by the "black leather" specification. Image concept arithmetic allows the search to evaluate complex queries by fusing image and text vectors in the latent space `(β * Image + (1-β) * Text)`. Users can visually search for items while applying text modifiers.
 
 <img width="1000" height="563" alt="floral_leather_boots" src="https://github.com/user-attachments/assets/6c08c2e9-b7bb-42d9-a5e0-e03150e3494c" />
 
-In turn, modifying leather boots with the "floral" text allows to retrieve leather boots with floral pattern on them. 
+In turn, modifying leather boots with "floral" allows the search to retrieve leather boots with floral pattern on them. 
 
 ### Architecture
 1. ML Models:
